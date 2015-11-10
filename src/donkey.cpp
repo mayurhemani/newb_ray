@@ -1,16 +1,20 @@
 #include "donkey.h"
 
 namespace donkey {
+
+
 	namespace primitive {
 
-		cube_t::cube_t(float size, point_t origin): halfSize(size/2.0f),
+		cube_t::cube_t(float size, point_t origin): 
+			primitive_t(object::kCube),
+			halfSize(size/2.0f),
 			planes({
-				{vector_t(0, 1, 0), origin + vector_t(0, 1, 0) * halfSize},
-				{vector_t(0, -1, 0), origin + vector_t(0, -1, 0) * halfSize},
-				{vector_t(-1, 0, 0), origin + vector_t(-1, 0, 0) * halfSize},
-				{vector_t(1, 0, 0), origin + vector_t(1, 0, 0) * halfSize},
-				{vector_t(0, 0, 1), origin + vector_t(0, 0, 1) * halfSize},
-				{vector_t(0, 0, -1), origin + vector_t(0, 0, -1) * halfSize}
+				plane_t {vector_t(0, 1, 0), origin + vector_t(0, 1, 0) * halfSize},
+				plane_t {vector_t(0, -1, 0), origin + vector_t(0, -1, 0) * halfSize},
+				plane_t {vector_t(-1, 0, 0), origin + vector_t(-1, 0, 0) * halfSize},
+				plane_t {vector_t(1, 0, 0), origin + vector_t(1, 0, 0) * halfSize},
+				plane_t {vector_t(0, 0, 1), origin + vector_t(0, 0, 1) * halfSize},
+				plane_t {vector_t(0, 0, -1), origin + vector_t(0, 0, -1) * halfSize}
 			}) {
 
 			// compute bounds
@@ -110,6 +114,64 @@ namespace donkey {
 				return b;
 			}
 
+			bool on_sphere(primitive::sphere_t const& sphere, geom::ray_t const& ray, point_t& p1, point_t& p2) {
+				float dd = glm::dot(ray.direction, ray.direction);
+				float ec = 2.0f * glm::dot(ray.direction, (ray.point - sphere.center));
+				float r2 = sphere.radius  * sphere.radius;
+
+				float dt = ec*ec + 4*dd*r2;
+
+				if (dt < 0) return false;
+				if (donkey::utils::equal(dd, 0.f)) return false;
+
+				dt = std::sqrt(dt);
+				dd = 1/(2 * dd);
+				float t0 = dd * (-ec + dt);
+				float t1 = dd * (-ec - dt);
+
+				p1 = ray.point + t0 * ray.direction;
+				p2 = ray.point + t1 * ray.direction;
+
+				return true; 
+			}
+
+			bool on_object(scene_object_ptr object, geom::ray_t const& ray, points_v& points) {
+				if (!(object)) return false;
+
+				bool b = false;
+				switch (object->type) {
+					case object::kPlane: {
+						point_t pt;
+						if (true == 
+							(b = on_plane(
+									*(std::dynamic_pointer_cast<primitive::plane_t>(object)), 
+									ray, 
+									pt))
+							) {
+							points.push_back(pt);
+						}
+						break;
+					}
+
+					case object::kSphere: {
+						point_t p1, p2;
+						if (true == 
+							(b = on_sphere(
+								*(std::dynamic_pointer_cast<primitive::sphere_t>(object)), 
+								ray, 
+								p1, 
+								p2))
+							) {
+							points.push_back(p1);
+							points.push_back(p2);
+						} 
+						break;
+					}
+
+					default:;
+				}
+				return b;
+			}
 
 		}
 

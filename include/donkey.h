@@ -2,6 +2,7 @@
 #define DONKEY_H
 
 #include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -13,6 +14,7 @@ namespace donkey {
 	typedef glm::vec3 	vector_t;
 	typedef glm::vec3 	rgb_t;
 	typedef glm::ivec3 	ipoint_t;
+	typedef std::vector<point_t> points_v;
 
 	namespace utils {
 
@@ -51,7 +53,6 @@ namespace donkey {
 			color_desc_t			color;
 			std::vector<texture_t>	textures;
 		};
-
 	}
 
 	namespace geom {
@@ -110,54 +111,122 @@ namespace donkey {
 
 	namespace object {
 
-		template <typename PrecisionType>
-		struct point_light_t {
-			point_t 		position;
-			color::color_desc_t 	color;
-			PrecisionType	intensity;
+		enum object_type {
+			kMesh,
+			kCube,
+			kSphere,
+			kTriangle,
+			kPlane,
+			kPointLight,
+			kDirectionalLight,
+			kCamera,
+			kNumObjectTypes
+		};
+
+		struct scene_object_t : public std::enable_shared_from_this<scene_object_t> {
+			point_t position;
+			object_type type;
+			explicit scene_object_t(object_type otype):type(otype) {}
+			virtual ~scene_object_t(){}
 		};
 
 		template <typename PrecisionType>
-		struct  directional_light_t {
+		struct point_light_t: public scene_object_t {
+			color::color_desc_t 	color;
+			PrecisionType	intensity;
+			point_light_t():scene_object_t(kPointLight) {}
+		};
+
+		template <typename PrecisionType>
+		struct  directional_light_t: public scene_object_t {
 			vector_t		direction;
 			color::color_desc_t	color;
 			PrecisionType	intensity;
+			directional_light_t():scene_object_t(kDirectionalLight) {}
 		};
 
 
 		template<typename VertexAttrib, typename FaceAttrib, typename PrecisionType, int FaceDims> 
-		struct mesh_t {
+		struct mesh_t: scene_object_t {
 			typedef geom::geometry_t<VertexAttrib, FaceAttrib, FaceDims> geometry_type;
 			typedef color::material_t color_type;
 			geometry_type  	geometry;
 			color_type		material;
+
+			mesh_t():scene_object_t(kMesh) {}
 		};
 
 
 		typedef mesh_t<attrib::vtx_attrib_t, attrib::face_attrib_t, float, 3> trimesh_t;
 
+		namespace camera {
+			struct camera_t: public scene_object_t {
+				glm::mat4 matrix;
+				camera_t(): scene_object_t(kCamera) {}
+			};
+
+			struct perspective_t: public camera_t {
+				glm::mat4 viewMatrix;
+
+				perspective_t(const float fovy, const float aspect, const float near, const float far) {
+					matrix = glm::perspective(fovy, aspect, near, far);
+				}
+
+				inline void lookAt(vector_t const& eye, vector_t const& up, vector_t const& target) {
+					// perspective (T const &fovy, T const &aspect, T const &near, T const &far)
+					viewMatrix = glm::lookAt(eye, target, up);
+				}
+
+				inline point_t transformPoint(point_t const& point) const {
+					glm::vec4 pt = glm::vec4(point.x, point.y, point.z, 1.0);
+					glm::vec4 m = matrix * viewMatrix * pt;
+					return glm::vec3(m);
+				}
+			};
+		}
 	}
 
 	namespace primitive {
-		struct plane_t {
-			vector_t	normal;
-			point_t 	point;
+		struct primitive_t: public object::scene_object_t {
+			color::material_t  material;
+			primitive_t(object::object_type type): scene_object_t(type) {}
+			virtual vector_t getNormalAt(point_t const& point) const { 
+				return glm::vec3(0.f, 0.f, 0.0f); 
+			}
 		};
 
-		struct triangle_t: public plane_t {
+		struct plane_t : public primitive_t {
+			vector_t	normal;
+			point_t 	point;
+			plane_t(): primitive_t(object::kPlane) {}
+			plane_t(vector_t const& planeNormal, vector_t const& planePoint):
+				primitive_t(object::kPlane),
+				normal(planeNormal), point(planePoint) {}
+
+			vector_t getNormalAt(point_t const&) const {
+				return normal;
+			}
+		};
+
+		struct triangle_t: public plane_t, public primitive_t {
 			point_t 	v0;
 			point_t 	v1;
 			point_t 	v2;
 
 			triangle_t(point_t p1, point_t p2, point_t p3):
+			primitive_t(object::kTriangle),
 			v0(p1), v1(p2), v2(p3)
 			{
 				normal = glm::cross(v0 - v1, v0 - v2);
 				point = v0;
 			}
+
+			vector_t getNormalAt(point_t const& ) const {
+				return normal;
+			}
 		};
 
-		struct cube_t {
+		struct cube_t : public primitive_t {
 		public:	
 			enum face_id {
 				kFaceTop,
@@ -194,12 +263,32 @@ namespace donkey {
 			bool inFace(face_id id, point_t const& p) const;
 		};
 
-		struct sphere_t {
+		struct sphere_t: public primitive_t {
 			float 	radius;
 			point_t center;
-			sphere_t(float rad, point_t const& cen): radius(rad), center(cen) {}
+			sphere_t(float rad, point_t const& cen): primitive_t(object::kSphere), radius(rad), center(cen) {}
+			vector_t getNormalAt(point_t const& point) const {
+				return point - center;
+			}
 		};
 	}
+
+	typedef std::shared_ptr<object::scene_object_t> scene_object_ptr;
+	typedef std::vector<scene_object_ptr> scene_object_list;
+
+
+	struct scene_t {
+		scene_object_list objects;
+		scene_object_list lights;
+
+		object::camera::perspective_t camera;
+
+		
+		void add(scene_object_ptr obj) {
+			objects.push_back(obj);
+		}
+
+	};
 
 	namespace algo {
 		point_t barycentric(primitive::triangle_t const& tri, point_t const& point);
@@ -209,8 +298,10 @@ namespace donkey {
 			bool on_triangle(primitive::triangle_t const& tri, geom::ray_t const& ray, point_t& point);
 			bool on_cube(primitive::cube_t const& cube, geom::ray_t const& ray, 
 						 point_t& point, primitive::cube_t::face_id& faceid);
+			bool on_sphere(primitive::sphere_t const& sphere, geom::ray_t const& ray,
+						point_t& p1, point_t& p2);
+			bool on_object(scene_object_ptr object, geom::ray_t const& ray, points_v& points);
 		}
-
 	}
 
 }

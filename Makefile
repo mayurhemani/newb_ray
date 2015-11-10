@@ -1,7 +1,7 @@
 OUTPUT= newb_ray
 BINS_DIR= bin
 INCLUDES= 	-Iext/glm/ \
-			-I/usr/local/include/opencv \
+			-I/usr/local/include \
 			-Iinclude
 
 LIBS_DIR= -L/usr/local/lib
