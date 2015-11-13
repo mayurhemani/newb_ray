@@ -44,6 +44,38 @@ namespace bray {
 		return result;
 	}
 
-	
+
+	// main ray-tracing routine
+	donkey::rgb_t newbray_t::getColorForRay(donkey::geom::ray_t const& ray, donkey::scene_t const& scene) const {
+		intersector_t raycaster(scene);
+		intersector_t::result_type result = raycaster.findClosest(ray);
+		if (result.noHit || !result.object)
+			return donkey::rgb_t(0.0f, 0.0f, 0.0f);
+		donkey::primitive_ptr object = 	std::dynamic_pointer_cast<donkey::primitive::primitive_t>(result.object);
+		if (object) {
+			return object->material.color.diffuse;
+		}
+		return donkey::rgb_t(0.0f, 0.0f, 0.0f);
+	}
+
+
+	bool newbray_t::trace(donkey::scene_t const& scene, image::image_t& toImage) {
+		cv::Mat& img = toImage.get();
+		unsigned char* data = img.data;
+
+		for (unsigned long i = 0; i < toImage.width; ++i) {
+			for (unsigned long j = 0; j < toImage.height; ++j) {
+				unsigned long pos = (i * toImage.width + j) * 4;
+				donkey::point_t pixelPosition = camera.positionForPixel(i, j);
+				donkey::geom::ray_t ray(camera.e, pixelPosition);
+				donkey::rgb_t clr = getColorForRay(ray, scene);
+				data[pos] = static_cast<unsigned char>(clr.x * 255);
+				data[pos+1] = static_cast<unsigned char>(clr.y * 255);
+				data[pos+2] = static_cast<unsigned char>(clr.z * 255);
+				data[pos+3] = 255;
+			}
+		}
+		return true;
+	}
 
 }

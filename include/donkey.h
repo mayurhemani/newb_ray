@@ -275,7 +275,7 @@ namespace donkey {
 
 	typedef std::shared_ptr<object::scene_object_t> scene_object_ptr;
 	typedef std::vector<scene_object_ptr> scene_object_list;
-
+	typedef std::shared_ptr<primitive::primitive_t> primitive_ptr;
 
 	struct scene_t {
 		scene_object_list objects;

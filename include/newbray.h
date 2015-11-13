@@ -10,8 +10,13 @@ namespace bray  {
 
 	namespace image {
 		struct image_t {
-			cv::Mat im;
-			explicit image_t(const std::string& path);
+			unsigned long width;
+			unsigned long height;
+			cv::Mat 	im;
+			image_t(unsigned long w, unsigned long h):
+			width(w), height(h),
+			im(width, height, CV_8UC3) {}
+
 			inline cv::Mat& get() { return im; }
 		};
 	}
@@ -27,8 +32,20 @@ namespace bray  {
 
 	}
 
-	struct intersector_t {
+	struct newbray_params_t {
+		short xRes;
+		short yRes;
+		float planeDistance;
+		float fieldOfViewY;
+		float aspectRatio;
+		donkey::point_t cameraPosition;
+		donkey::point_t cameraUp;
+		donkey::point_t cameraTarget;
+		short maxDepth;
+	};
 
+
+	struct intersector_t {
 		struct result_type {
 			float 						distance;
 			donkey::point_t 			point;
@@ -42,9 +59,59 @@ namespace bray  {
 		result_type findClosest(donkey::geom::ray_t const& ray) const;
 	};
 
-	struct ray_generator_t {
-		donkey::scene_t const& sceneRef;
-		explicit ray_generator_t(donkey::scene_t const& scene): sceneRef(scene) {}
+	struct camera_t {
+		donkey::vector_t n;
+		donkey::vector_t u;
+		donkey::vector_t v;
+		donkey::vector_t e;
+		donkey::point_t  bottomLeft;
+		float pixelSizeX;
+		float pixelSizeY;
+
+
+		camera_t(newbray_params_t params): e(params.cameraPosition) {
+			n = (e - params.cameraTarget);
+			n = glm::normalize(n);
+			u = glm::cross(params.cameraUp, n);
+			u = glm::normalize(u);
+			v = glm::cross(n, u);
+			float height = 2 * params.planeDistance * std::tan(params.fieldOfViewY/2.0);
+			float width = height * params.aspectRatio;
+			donkey::vector_t cpos = e - params.planeDistance * n;
+			bottomLeft = cpos - (width/2)*u + (height/2)*v;
+			pixelSizeX = width / params.xRes;
+			pixelSizeY = height / params.yRes;
+		}
+
+		inline donkey::point_t positionForPixel(float p, float q) const {
+			return bottomLeft + p * pixelSizeX * u + q * pixelSizeY * v;
+		}
+		inline donkey::point_t transformPoint(donkey::point_t const& p) const {
+			return e - p;
+		}
+	};
+
+	
+	struct newbray_t {
+	private:
+		newbray_params_t 	params;
+		camera_t 			camera;
+
+	public:
+		explicit newbray_t(newbray_params_t const& rayTraceParams):
+			params(rayTraceParams),
+			camera(rayTraceParams) {}
+
+		bool trace(donkey::scene_t const& scene, image::image_t& toImage);
+
+		inline camera_t const& getCamera() const { return camera; };
+
+		donkey::rgb_t getColorForRay(donkey::geom::ray_t const& ray,
+									 donkey::scene_t const& scene) const;
+
+	private:
+		void transformObjects(donkey::scene_t& scene);
+
 		donkey::geom::ray_t getRayForPixel(unsigned short x, unsigned short y) const;
 		donkey::geom::ray_t getReflectedRay(donkey::geom::ray_t const& ray,
 											donkey::point_t const& point,
@@ -52,22 +119,7 @@ namespace bray  {
 		donkey::geom::ray_t getShadowRay(donkey::point_t const& point, donkey::point_t const& lightSrcPos) const;
 	};
 
-	struct tracer_t {
-		short maxDepth;
-		explicit tracer_t(short recDepth=2):maxDepth(recDepth){}
-		bool trace(donkey::scene_t const& scene, image::image_t& toImage);
-	};
-
-	struct newbray_params_t {
-		short xRes;
-		short yRes;
-		float planeDistance;
-		float fieldOfViewY;
-		float aspectRatio;
-		donkey::vector_t cameraPosition;
-		donkey::vector_t cameraUp;
-		
-	};
+	
 }
 
 
