@@ -7,7 +7,6 @@
 #include <limits>
 
 namespace bray  {
-
 	namespace image {
 		struct image_t {
 			unsigned long width;
@@ -15,7 +14,7 @@ namespace bray  {
 			cv::Mat 	im;
 			image_t(unsigned long w, unsigned long h):
 			width(w), height(h),
-			im(width, height, CV_8UC3) {}
+			im(height, width, CV_8UC3) {}
 
 			inline cv::Mat& get() { return im; }
 		};
@@ -29,7 +28,6 @@ namespace bray  {
 							donkey::rgb_t const& diffuse,
 							donkey::rgb_t const& specular,
 							float shininess);
-
 	}
 
 	struct newbray_params_t {
@@ -65,27 +63,32 @@ namespace bray  {
 		donkey::vector_t v;
 		donkey::vector_t e;
 		donkey::point_t  bottomLeft;
+		donkey::point_t  topLeft;
 		float pixelSizeX;
 		float pixelSizeY;
+		float imWidth;
+		float imHeight;
 
 
 		camera_t(newbray_params_t params): e(params.cameraPosition) {
-			n = (e - params.cameraTarget);
+			n = params.cameraTarget - e;
 			n = glm::normalize(n);
 			u = glm::cross(params.cameraUp, n);
 			u = glm::normalize(u);
 			v = glm::cross(n, u);
-			float height = 2 * params.planeDistance * std::tan(params.fieldOfViewY/2.0);
-			float width = height * params.aspectRatio;
-			donkey::vector_t cpos = e - params.planeDistance * n;
-			bottomLeft = cpos - (width/2)*u + (height/2)*v;
-			pixelSizeX = width / params.xRes;
-			pixelSizeY = height / params.yRes;
+			imHeight = 2 * params.planeDistance * std::tan(params.fieldOfViewY/2.0);
+			imWidth = imHeight * params.aspectRatio;
+			donkey::vector_t cpos = e + params.planeDistance * n;
+			bottomLeft = cpos - (imWidth/2)*u - (imHeight/2)*v;
+			topLeft = cpos - (imWidth/2)*u - (imHeight/2) * v;
+			pixelSizeX = imWidth / params.xRes;
+			pixelSizeY = imHeight / params.yRes;
 		}
 
 		inline donkey::point_t positionForPixel(float p, float q) const {
-			return bottomLeft + p * pixelSizeX * u + q * pixelSizeY * v;
+			return bottomLeft  + p * pixelSizeX * u + q * pixelSizeY * v;
 		}
+
 		inline donkey::point_t transformPoint(donkey::point_t const& p) const {
 			return e - p;
 		}

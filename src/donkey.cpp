@@ -116,10 +116,11 @@ namespace donkey {
 
 			bool on_sphere(primitive::sphere_t const& sphere, geom::ray_t const& ray, point_t& p1, point_t& p2) {
 				float dd = glm::dot(ray.direction, ray.direction);
-				float ec = 2.0f * glm::dot(ray.direction, (ray.point - sphere.center));
+				donkey::vector_t po = (ray.point - sphere.center);
+				float ec = 2.0f * glm::dot(ray.direction, po);
 				float r2 = sphere.radius  * sphere.radius;
-
-				float dt = ec*ec + 4*dd*r2;
+				float pod = glm::dot(po, po);
+				float dt = ec*ec - 4*dd*(pod - r2);
 
 				if (dt < 0) return false;
 				if (donkey::utils::equal(dd, 0.f)) return false;
@@ -128,6 +129,8 @@ namespace donkey {
 				dd = 1/(2 * dd);
 				float t0 = dd * (-ec + dt);
 				float t1 = dd * (-ec - dt);
+
+				if (t0 < 0 || t1 < 0) return false;
 
 				p1 = ray.point + t0 * ray.direction;
 				p2 = ray.point + t1 * ray.direction;

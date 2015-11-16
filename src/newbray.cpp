@@ -54,7 +54,7 @@ namespace bray {
 		donkey::primitive_ptr object = 	std::dynamic_pointer_cast<donkey::primitive::primitive_t>(result.object);
 		if (object) {
 			return object->material.color.diffuse;
-		}
+		} 
 		return donkey::rgb_t(0.0f, 0.0f, 0.0f);
 	}
 
@@ -63,18 +63,23 @@ namespace bray {
 		cv::Mat& img = toImage.get();
 		unsigned char* data = img.data;
 
-		for (unsigned long i = 0; i < toImage.width; ++i) {
-			for (unsigned long j = 0; j < toImage.height; ++j) {
-				unsigned long pos = (i * toImage.width + j) * 4;
-				donkey::point_t pixelPosition = camera.positionForPixel(i, j);
-				donkey::geom::ray_t ray(camera.e, pixelPosition);
+		size_t c = 0;
+
+		for (unsigned long i = 0; i < toImage.height; ++i) {
+			for (unsigned long j = 0; j < toImage.width; ++j) {
+				unsigned long pos = (i * toImage.width + j) * 3;
+				donkey::point_t pixelPosition = camera.positionForPixel(j, i);
+				donkey::geom::ray_t ray(camera.e, glm::normalize(pixelPosition));
+				bool bg = false;
+
 				donkey::rgb_t clr = getColorForRay(ray, scene);
+
 				data[pos] = static_cast<unsigned char>(clr.x * 255);
 				data[pos+1] = static_cast<unsigned char>(clr.y * 255);
 				data[pos+2] = static_cast<unsigned char>(clr.z * 255);
-				data[pos+3] = 255;
 			}
 		}
+
 		return true;
 	}
 

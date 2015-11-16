@@ -281,13 +281,10 @@ namespace donkey {
 		scene_object_list objects;
 		scene_object_list lights;
 
-		object::camera::perspective_t camera;
-
 		
 		void add(scene_object_ptr obj) {
 			objects.push_back(obj);
 		}
-
 	};
 
 	namespace algo {
@@ -304,6 +301,10 @@ namespace donkey {
 		}
 	}
 
+}
+
+inline void printVector(glm::vec3 v) {
+	printf("[%f %f %f]\n", v.x, v.y, v.z);
 }
 
 #endif

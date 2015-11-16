@@ -8,7 +8,7 @@ LIBS_DIR= -L/usr/local/lib
 
 LIBS= -lopencv_core -lopencv_highgui -lopencv_imgproc
 
-CCFLAGS= -std=c++11
+CCFLAGS= -std=c++11 -O0 -g
 	
 all: $(BINS_DIR)/newbray.o $(BINS_DIR)/donkey.o $(BINS_DIR)/main.o
 	g++ $(BINS_DIR)/main.o $(BINS_DIR)/donkey.o $(BINS_DIR)/newbray.o -o $(OUTPUT) $(LIBS_DIR) $(LIBS)
