@@ -31,6 +31,8 @@ int main() {
 
 	donkey::primitive_ptr obj = std::make_shared<donkey::primitive::sphere_t>(4.0f, donkey::point_t(0.f, 0.f, 10.f));
 	obj->material.color.diffuse = donkey::rgb_t(0.f, 0.f, 1.f);
+	obj->material.color.specular = donkey::rgb_t(0.5f, 0.5f, 0.5f);
+	obj->material.color.ambient = donkey::rgb_t(0.1f, 0.1f, 0.1f);
 	
 	donkey::scene_t scene;
 	scene.add(obj);

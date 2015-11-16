@@ -1,5 +1,11 @@
 #include "newbray.h"
 
+float clamp(float val, float min, float max) {
+	if (val < min) return min;
+	if (val > max) return max;
+	return val;
+}
+
 namespace bray {
 
 	namespace color {
@@ -53,7 +59,15 @@ namespace bray {
 			return donkey::rgb_t(0.0f, 0.0f, 0.0f);
 		donkey::primitive_ptr object = 	std::dynamic_pointer_cast<donkey::primitive::primitive_t>(result.object);
 		if (object) {
-			return object->material.color.diffuse;
+			donkey::vector_t normal = object->getNormalAt(result.point);
+			printVector(normal);
+			donkey::vector_t cameraVec = glm::normalize(result.point);
+			donkey::vector_t lightPos(-3.0f, -4.0f, 0.0); // hard-coded light position for now
+			donkey::vector_t lightVec = glm::normalize(result.point - lightPos);
+			const float shininess = 20.0f; // for now
+			return color::phong(normal, lightVec, cameraVec, object->material.color.diffuse,
+			 		object->material.color.specular, shininess);
+			//return object->material.color.diffuse;
 		} 
 		return donkey::rgb_t(0.0f, 0.0f, 0.0f);
 	}
@@ -74,9 +88,13 @@ namespace bray {
 
 				donkey::rgb_t clr = getColorForRay(ray, scene);
 
-				data[pos] = static_cast<unsigned char>(clr.x * 255);
-				data[pos+1] = static_cast<unsigned char>(clr.y * 255);
-				data[pos+2] = static_cast<unsigned char>(clr.z * 255);
+				float clrx = clamp(clr.x, 0.f, 1.f);
+				float clry = clamp(clr.y, 0.f, 1.f);
+				float clrz = clamp(clr.z, 0.f, 1.f);
+
+				data[pos] = static_cast<unsigned char>(clrx * 255);
+				data[pos+1] = static_cast<unsigned char>(clry * 255);
+				data[pos+2] = static_cast<unsigned char>(clrz * 255);
 			}
 		}
 

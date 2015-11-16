@@ -268,7 +268,7 @@ namespace donkey {
 			point_t center;
 			sphere_t(float rad, point_t const& cen): primitive_t(object::kSphere), radius(rad), center(cen) {}
 			vector_t getNormalAt(point_t const& point) const {
-				return point - center;
+				return glm::normalize(point - center);
 			}
 		};
 	}
