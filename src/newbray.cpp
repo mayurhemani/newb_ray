@@ -19,7 +19,7 @@ namespace bray {
 
 			float diffuseTerm = glm::dot(normalVec, lightVec);
 			float specularBase = glm::dot( 
-					(2.0f * glm::dot(lightVec, normalVec) * normalVec - lightVec),
+					glm::normalize(2.0f * glm::dot(lightVec, normalVec) * normalVec - lightVec),
 					cameraVec );
 			float specularTerm = (float)std::pow((double)specularBase, (double)shininess);
 			return diffuseTerm * diffuse + specularTerm * specular;
@@ -60,12 +60,11 @@ namespace bray {
 		donkey::primitive_ptr object = 	std::dynamic_pointer_cast<donkey::primitive::primitive_t>(result.object);
 		if (object) {
 			donkey::vector_t normal = object->getNormalAt(result.point);
-			printVector(normal);
 			donkey::vector_t cameraVec = glm::normalize(result.point);
-			donkey::vector_t lightPos(-3.0f, -4.0f, 0.0); // hard-coded light position for now
+			donkey::vector_t lightPos(-40.0f, -40.0f, 50.0); // hard-coded light position for now
 			donkey::vector_t lightVec = glm::normalize(result.point - lightPos);
-			const float shininess = 20.0f; // for now
-			return color::phong(normal, lightVec, cameraVec, object->material.color.diffuse,
+			const float shininess = 128.0f; // for now
+			return object->material.color.ambient + color::phong(normal, lightVec, cameraVec, object->material.color.diffuse,
 			 		object->material.color.specular, shininess);
 			//return object->material.color.diffuse;
 		} 
