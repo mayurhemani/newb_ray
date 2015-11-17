@@ -123,7 +123,7 @@ namespace donkey {
 			kNumObjectTypes
 		};
 
-		struct scene_object_t : public std::enable_shared_from_this<scene_object_t> {
+		struct scene_object_t  {
 			point_t position;
 			object_type type;
 			explicit scene_object_t(object_type otype):type(otype) {}
