@@ -1,8 +1,8 @@
 #include "newbray.h"
 
 float clamp(float val, float min, float max) {
-	if (val < min) return min;
-	if (val > max) return max;
+	if (val <= min) return min;
+	if (val >= max) return max;
 	return val;
 }
 
@@ -17,11 +17,11 @@ namespace bray {
 							donkey::rgb_t const& specular,
 							float shininess) {
 
-			float diffuseTerm = glm::dot(normalVec, lightVec);
+			float diffuseTerm = clamp(glm::dot(normalVec, lightVec), 0.f, 1.f);
 			float specularBase = glm::dot( 
 					glm::normalize(2.0f * glm::dot(lightVec, normalVec) * normalVec - lightVec),
 					cameraVec );
-			float specularTerm = (float)std::pow((double)specularBase, (double)shininess);
+			float specularTerm = clamp((float)std::pow((double)specularBase, (double)shininess), 0.f, 1.f);
 			return diffuseTerm * diffuse + specularTerm * specular;
 		}
 	}
@@ -63,7 +63,7 @@ namespace bray {
 			donkey::vector_t cameraVec = glm::normalize(result.point);
 			donkey::vector_t lightPos(-40.0f, -40.0f, 50.0); // hard-coded light position for now
 			donkey::vector_t lightVec = glm::normalize(result.point - lightPos);
-			const float shininess = 128.0f; // for now
+			const float shininess = 28.0f; // for now
 			return object->material.color.ambient + color::phong(normal, lightVec, cameraVec, object->material.color.diffuse,
 			 		object->material.color.specular, shininess);
 			//return object->material.color.diffuse;
@@ -83,7 +83,6 @@ namespace bray {
 				unsigned long pos = (i * toImage.width + j) * 3;
 				donkey::point_t pixelPosition = camera.positionForPixel(j, i);
 				donkey::geom::ray_t ray(camera.e, glm::normalize(pixelPosition));
-				bool bg = false;
 
 				donkey::rgb_t clr = getColorForRay(ray, scene);
 
@@ -91,9 +90,13 @@ namespace bray {
 				float clry = clamp(clr.y, 0.f, 1.f);
 				float clrz = clamp(clr.z, 0.f, 1.f);
 
-				data[pos] = static_cast<unsigned char>(clrx * 255);
+				if (clry > clrx || clrz > clrx) {
+					printf("%f %f %f\n", clrx, clry, clrz);
+				}
+
+				data[pos] = static_cast<unsigned char>(clrz * 255);
 				data[pos+1] = static_cast<unsigned char>(clry * 255);
-				data[pos+2] = static_cast<unsigned char>(clrz * 255);
+				data[pos+2] = static_cast<unsigned char>(clrx * 255);
 			}
 		}
 

@@ -2,7 +2,8 @@ OUTPUT= newb_ray
 BINS_DIR= bin
 INCLUDES= 	-Iext/glm/ \
 			-I/usr/local/include \
-			-Iinclude
+			-Iinclude \
+			-Iext/rapidjson/include/
 
 LIBS_DIR= -L/usr/local/lib
 

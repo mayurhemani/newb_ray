@@ -1,21 +1,9 @@
 #include "donkey.h"
 #include "newbray.h"
+#include "grass.h"
 #include <memory>
-
-int main() {
-
 /*
-		short xRes;
-		short yRes;
-		float planeDistance;
-		float fieldOfViewY;
-		float aspectRatio;
-		donkey::point_t cameraPosition;
-		donkey::point_t cameraUp;
-		donkey::point_t cameraTarget;
-		short maxDepth;
-*/
-	bray::newbray_params_t params = {
+bray::newbray_params_t params = {
 		400,
 		300,
 		5.0,
@@ -30,21 +18,54 @@ int main() {
 	bray::newbray_t tracer(params);
 
 	donkey::primitive_ptr obj = std::make_shared<donkey::primitive::sphere_t>(4.0f, donkey::point_t(0.f, 0.f, 10.f));
-	obj->material.color.diffuse = donkey::rgb_t(0.f, 0.f, 1.f);
+	obj->material.color.diffuse = donkey::rgb_t(1.f, 0.f, 0.f);
 	obj->material.color.specular = donkey::rgb_t(0.5f, 0.5f, 0.5f);
 	obj->material.color.ambient = donkey::rgb_t(0.1f, 0.1f, 0.1f);
 	
 	donkey::scene_t scene;
 	scene.add(obj);
 
+	donkey::primitive_ptr obj2 = std::make_shared<donkey::primitive::sphere_t>(2.0f, donkey::point_t(0.f, 2.f, 4.f));
+	obj2->material.color.diffuse = donkey::rgb_t(0.f, 1.f, 1.f);
+	obj2->material.color.specular = donkey::rgb_t(0.5f, 0.5f, 0.5f);
+	obj2->material.color.ambient = donkey::rgb_t(0.1f, 0.1f, 0.1f);
 	
-	bray::image::image_t image(400, 300);
+	scene.add(obj2);
+*/
 
-	tracer.trace(scene, image);
+int main(int argc, char* argv[]) {
 
-	cv::imshow("Result", image.get());
+	std::string inputFile;
+	std::string outputFile;
 
-	cv::waitKey(0);
+	for (int i = 1; i < argc; ++i) {
+		std::string arg = argv[i];
+		if (arg == "-i" && (i+1) < argc) {
+			inputFile = argv[i+1];
+		} else if (arg == "-o" && (i+1) < argc) {
+			outputFile = argv[i+1] + std::string(".jpg");
+		}
+	}
+
+	if (inputFile.empty()) {
+		printf("Usage: %s -i inputFile [-o outputFile]\n", argv[0]);
+		return -1;
+	}
+
+	grass::scene_file_t data(inputFile);
+
+
+	bray::image::image_t image(data.params.xRes, data.params.yRes);
+
+	bray::newbray_t tracer(data.params);
+	tracer.trace(data.scene, image);
+
+	if (outputFile.empty()) {
+		cv::imshow("Result", image.get());
+		cv::waitKey(0);
+	} else {
+		cv::imwrite(outputFile.c_str(), image.get());
+	}
 
 	return 0;
 }
