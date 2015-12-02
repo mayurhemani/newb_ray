@@ -18,3 +18,48 @@ Should work on Linux as well.
 ## Running
 * Create the scene in the  main.cpp file. Right now, there's no external scene format.
 * Recompile and run
+
+## Json sample
+	{
+		"models": [
+			{
+				"type" : "sphere",
+				"radius" : 4.0,
+				"center" : [0.0, 0.0, 10.0],
+				"material" : {
+					"color"  : {
+						"diffuse" : [1.0, 0.0, 0.0],
+						"specular" : [0.5, 0.5, 0.5],
+						"ambient" : [0.1, 0.1, 0.1]
+					}
+				}
+			},
+			{
+				"type" : "sphere",
+				"radius" : 4.0,
+				"center" : [-3.0, -1.0, 12.0],
+				"material" : {
+					"color"  : {
+						"diffuse" : [1.0, 1.0, 0.0],
+						"specular" : [0.5, 0.5, 0.5],
+						"ambient" : [0.1, 0.1, 0.1]
+					}
+				}
+			}
+
+		],
+		"params": {
+			"xRes" : 400,
+			"yRes" : 300,
+			"planeDistance": 5.0,
+			"fieldOfViewY" : 45.0,
+			"aspectRatio": 1.3333,
+			"cameraPosition": [0.0, 0.0, 0.0],
+			"cameraUp": [0.0, 1.0, 0.0],
+			"cameraTarget": [0.0, 0.0, 10.0],
+			"maxDepth": 4
+		}
+	}
+
+
+![](outputs/op1.jpg "Crude Ouptut")
