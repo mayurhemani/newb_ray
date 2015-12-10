@@ -9,7 +9,7 @@
 					"diffuse" : [1.0, 0.0, 0.0],
 					"specular" : [0.5, 0.5, 0.5],
 					"ambient" : [0.1, 0.1, 0.1],
-					"shininess" : 28.0
+					"shininess" : 40.0
 				}
 			}
 		},
@@ -20,6 +20,19 @@
 			"material" : {
 				"color"  : {
 					"diffuse" : [1.0, 1.0, 0.0],
+					"specular" : [0.5, 0.5, 0.5],
+					"ambient" : [0.1, 0.1, 0.1],
+					"shininess" : 40.0
+				}
+			}
+		},
+		{
+			"type" : "sphere",
+			"radius" : 4.0,
+			"center" : [3.0, -1.0, 12.0],
+			"material" : {
+				"color"  : {
+					"diffuse" : [0.2, 0.3, 0.5],
 					"specular" : [0.5, 0.5, 0.5],
 					"ambient" : [0.1, 0.1, 0.1],
 					"shininess" : 40.0
@@ -36,14 +49,30 @@
 			"color" : {
 				"diffuse" : [0.3, 0.3, 1.0]
 			}
+		},
+		{
+			"type" : "pointLight",
+			"position" : [40.0, -40.0, 50.0],
+			"intensity" : 0.6,
+			"color" : {
+				"diffuse" : [1.0, 0.3, 1.0]
+			}
+		},
+		{
+			"type" : "pointLight",
+			"position" : [40.0, 40.0, 50.0],
+			"intensity" : 0.5,
+			"color" : {
+				"diffuse" : [1.0, 0.3, 0.3]
+			}
 		}
 	],
 	"params": {
-		"xRes" : 400,
-		"yRes" : 300,
+		"xRes" : 600,
+		"yRes" : 400,
 		"planeDistance": 5.0,
 		"fieldOfViewY" : 45.0,
-		"aspectRatio": 1.3333,
+		"aspectRatio": 1.5,
 		"cameraPosition": [0.0, 0.0, 0.0],
 		"cameraUp": [0.0, 1.0, 0.0],
 		"cameraTarget": [0.0, 0.0, 10.0],
