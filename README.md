@@ -48,6 +48,16 @@ Should work on Linux as well.
 			}
 
 		],
+		"lights": [
+			{
+				"type": "pointLight",
+				"position": [-40, -40, 50],
+				"intensity": 1.0,
+				"color" : {
+					"diffuse" : [1.0, 1.0, 1.0]
+				}
+			}
+		],
 		"params": {
 			"xRes" : 400,
 			"yRes" : 300,
@@ -60,6 +70,3 @@ Should work on Linux as well.
 			"maxDepth": 4
 		}
 	}
-
-
-![](outputs/op1.jpg "Crude Ouptut")

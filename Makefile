@@ -20,5 +20,5 @@ $(BINS_DIR)/newbray.o: include/donkey.h include/newbray.h src/newbray.cpp
 $(BINS_DIR)/donkey.o: include/donkey.h src/donkey.cpp
 	g++ -c src/donkey.cpp $(INCLUDES) -o $(BINS_DIR)/donkey.o $(CCFLAGS)
 
-$(BINS_DIR)/main.o: include/donkey.h include/newbray.h src/main.cpp
+$(BINS_DIR)/main.o: include/donkey.h include/newbray.h src/main.cpp include/grass.h
 	g++ -c src/main.cpp $(INCLUDES) -o $(BINS_DIR)/main.o $(CCFLAGS)

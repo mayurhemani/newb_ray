@@ -16,6 +16,14 @@ namespace grass {
 				callback(arr[i]);
 			}
 		}
+
+		inline donkey::rgb_t toColor(rapidjson::Value const& val) {
+			return donkey::rgb_t(
+					val[0].GetDouble(),
+					val[1].GetDouble(),
+					val[2].GetDouble()
+				);
+		}
 	}
 
 	struct model_parser_t {
@@ -51,22 +59,15 @@ namespace grass {
 		donkey::color::material_t parseMaterial(rapidjson::Value const& val) {
 			donkey::color::material_t mat;
 
-			auto toColor = [](rapidjson::Value const& val) {
-				return donkey::rgb_t(
-						val[0].GetDouble(),
-						val[1].GetDouble(),
-						val[2].GetDouble()
-					);
-			};
-
 			if (val["color"].IsObject()) {
 				if (val["color"]["diffuse"].IsArray()) 
-					mat.color.diffuse = toColor(val["color"]["diffuse"]);
+					mat.color.diffuse = parse_utils::toColor(val["color"]["diffuse"]);
 				if (val["color"]["specular"].IsArray())
-					mat.color.specular = toColor(val["color"]["specular"]);
+					mat.color.specular = parse_utils::toColor(val["color"]["specular"]);
 				if (val["color"]["ambient"].IsArray())
-					mat.color.ambient = toColor(val["color"]["ambient"]);
-				
+					mat.color.ambient = parse_utils::toColor(val["color"]["ambient"]);
+				if (val["color"]["shininess"].IsNumber())
+					mat.color.shininess = val["color"]["shininess"].GetDouble();
 			} else if (val["texture"].IsString()) {
 
 			}
@@ -135,7 +136,44 @@ namespace grass {
 		}
 	};
 
+	struct light_parser_t {
+		donkey::scene_object_ptr object;
 
+		void parsePointLight(rapidjson::Value const& val) {
+			auto light = std::make_shared< donkey::object::point_light_t<float> >();
+			if (val["color"].IsObject()) {
+				if (val["color"]["diffuse"].IsArray()) 
+					light->color.diffuse = parse_utils::toColor(val["color"]["diffuse"]);
+				/*if (val["color"].HasMember("specular") && val["color"]["specular"].IsArray())
+					light->color.specular = parse_utils::toColor(val["color"]["specular"]);
+				if (val["color"].HasMember("ambient") && val["color"]["ambient"].IsArray())
+					light->color.ambient = parse_utils::toColor(val["color"]["ambient"]);*/
+			}
+			if (val["intensity"].IsNumber()) {
+				light->intensity = val["intensity"].GetDouble();
+			}
+			if (val["position"].IsArray()) {
+				const rapidjson::Value& point = val["position"];
+				light->position = donkey::point_t(
+							point[0].GetDouble(), 
+							point[1].GetDouble(), 
+							point[2].GetDouble()
+						);
+			}
+			object = donkey::demote(light);
+		}
+
+		explicit light_parser_t(rapidjson::Value const& val) {
+			const std::string type = val["type"].GetString();
+			if (type == "pointLight") {
+				parsePointLight(val);
+			} 
+		}
+
+		donkey::scene_object_ptr getLight() const {
+			return object;
+		}
+	};
 
 	struct scene_parser_t {
 		rapidjson::Document doc;
@@ -161,11 +199,16 @@ namespace grass {
 				} else if (name == "params") {
 					tracer_parser_t parser(i->value);
 					params = *(parser.getParams());
+				} else if (name == "lights") {
+					parse_utils::for_each_arr(i->value, [&scene](rapidjson::Value const& light) {
+						light_parser_t parser(light);
+						donkey::scene_object_ptr obj = parser.getLight();
+						scene.addLight(obj); 
+					});
 				}
 			}
 		}
 	};
-
 
 	struct scene_file_t {
 		

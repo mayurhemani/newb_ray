@@ -24,6 +24,18 @@ namespace bray {
 			float specularTerm = clamp((float)std::pow((double)specularBase, (double)shininess), 0.f, 1.f);
 			return diffuseTerm * diffuse + specularTerm * specular;
 		}
+
+		donkey::rgb_t mixLightColor(
+					donkey::rgb_t const& lightColor, 
+					float lightIntensity, 
+					donkey::rgb_t const& materialColor) {
+			donkey::rgb_t ltColor = lightIntensity * lightColor;
+			donkey::rgb_t targetClr = donkey::rgb_t(
+											ltColor.x * materialColor.x, 
+											ltColor.y * materialColor.y, 
+											ltColor.z * materialColor.z);
+			return 0.9f * targetClr + 0.1f * materialColor;
+		}
 	}
 
 	intersector_t::result_type intersector_t::findClosest(donkey::geom::ray_t const& ray) const {
@@ -57,16 +69,46 @@ namespace bray {
 		intersector_t::result_type result = raycaster.findClosest(ray);
 		if (result.noHit || !result.object)
 			return donkey::rgb_t(0.0f, 0.0f, 0.0f);
+
 		donkey::primitive_ptr object = 	std::dynamic_pointer_cast<donkey::primitive::primitive_t>(result.object);
 		if (object) {
 			donkey::vector_t normal = object->getNormalAt(result.point);
-			donkey::vector_t cameraVec = glm::normalize(result.point);
-			donkey::vector_t lightPos(-40.0f, -40.0f, 50.0); // hard-coded light position for now
-			donkey::vector_t lightVec = glm::normalize(result.point - lightPos);
-			const float shininess = 28.0f; // for now
-			return object->material.color.ambient + color::phong(normal, lightVec, cameraVec, object->material.color.diffuse,
-			 		object->material.color.specular, shininess);
-			//return object->material.color.diffuse;
+			donkey::vector_t cameraVec = glm::normalize(result.point); // result.point - [0, 0, 0]
+
+			std::vector<donkey::rgb_t> lightColors;
+
+			for (auto lightObj : scene.lights) {
+				auto light = donkey::promote<donkey::object::point_light_t<float> >(lightObj);
+				if (!light) continue;
+
+				donkey::vector_t lightPos = light->position;
+				donkey::vector_t lightVec = glm::normalize(result.point - lightPos);
+				donkey::rgb_t lightColor = light->color.diffuse;
+
+
+				donkey::rgb_t phColor = color::phong(
+										normal, 
+										lightVec, 
+										cameraVec, 
+										color::mixLightColor(lightColor, light->intensity, object->material.color.diffuse),
+			 							object->material.color.specular, 
+			 							object->material.color.shininess);
+
+				donkey::rgb_t clr = object->material.color.ambient + phColor;
+
+				lightColors.push_back(clr);
+			}
+
+			donkey::rgb_t color(0.f, 0.f, 0.f);
+			
+			if (!lightColors.empty()) {
+				float factor = 1.f / lightColors.size();
+				std::for_each(lightColors.begin(), lightColors.end(), [&factor, &color] (donkey::rgb_t const& c) {
+					color += factor * c;
+				});
+			} 
+
+			return color;
 		} 
 		return donkey::rgb_t(0.0f, 0.0f, 0.0f);
 	}

@@ -42,6 +42,8 @@ namespace donkey {
 			rgb_t	diffuse;
 			rgb_t	specular;
 			rgb_t	ambient;
+			float 	shininess;
+			color_desc_t():shininess(1.0f) {}
 		};
 
 		struct texture_t {
@@ -133,7 +135,8 @@ namespace donkey {
 		template <typename PrecisionType>
 		struct point_light_t: public scene_object_t {
 			color::color_desc_t 	color;
-			PrecisionType	intensity;
+			PrecisionType			intensity;
+			point_t 				position;
 			point_light_t():scene_object_t(kPointLight) {}
 		};
 
@@ -285,6 +288,10 @@ namespace donkey {
 		void add(scene_object_ptr obj) {
 			objects.push_back(obj);
 		}
+
+		void addLight(scene_object_ptr light) {
+			lights.push_back(light);
+		}
 	};
 
 	namespace algo {
@@ -301,6 +308,20 @@ namespace donkey {
 		}
 	}
 
+	template <typename PtrType>
+	inline scene_object_ptr demote(PtrType ptr) {
+		return std::dynamic_pointer_cast<donkey::object::scene_object_t>(ptr);
+	}
+
+	template <typename ElemType>
+	inline std::shared_ptr<ElemType> promote(scene_object_ptr ptr) {
+		return std::dynamic_pointer_cast<ElemType>(ptr);
+	}
+
+	template <typename PtrType>
+	inline PtrType promotePtr(scene_object_ptr ptr) {
+		return std::dynamic_pointer_cast<typename PtrType::element_type>(ptr);
+	}
 }
 
 inline void printVector(glm::vec3 v) {

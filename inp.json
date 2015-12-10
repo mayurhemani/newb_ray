@@ -8,7 +8,8 @@
 				"color"  : {
 					"diffuse" : [1.0, 0.0, 0.0],
 					"specular" : [0.5, 0.5, 0.5],
-					"ambient" : [0.1, 0.1, 0.1]
+					"ambient" : [0.1, 0.1, 0.1],
+					"shininess" : 28.0
 				}
 			}
 		},
@@ -20,11 +21,22 @@
 				"color"  : {
 					"diffuse" : [1.0, 1.0, 0.0],
 					"specular" : [0.5, 0.5, 0.5],
-					"ambient" : [0.1, 0.1, 0.1]
+					"ambient" : [0.1, 0.1, 0.1],
+					"shininess" : 40.0
 				}
 			}
 		}
 
+	],
+	"lights" : [
+		{
+			"type" : "pointLight",
+			"position" : [-40.0, -40.0, 50.0],
+			"intensity" : 1.0,
+			"color" : {
+				"diffuse" : [0.3, 0.3, 1.0]
+			}
+		}
 	],
 	"params": {
 		"xRes" : 400,
